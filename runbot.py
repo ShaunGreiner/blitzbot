@@ -1,14 +1,15 @@
 import cv2
 import time
+import copy
 import numpy as np
 import math
 from PIL import ImageGrab
 from matplotlib import pyplot as plt
 from pymouse import PyMouse
 
-clickDelay = 1/4
+clickDelay = 1.0/15
 
-board = [
+blankBoard = [
     [0,0,0,0,0,0,0,0],
     [0,0,0,0,0,0,0,0],
     [0,0,0,0,0,0,0,0],
@@ -18,6 +19,8 @@ board = [
     [0,0,0,0,0,0,0,0],
     [0,0,0,0,0,0,0,0],
 ]
+
+board = copy.deepcopy(blankBoard)
 
 m = PyMouse()
 
@@ -47,8 +50,6 @@ def gridToClick(row,col):
     m.click(clickX+36,clickY+36)
     time.sleep(clickDelay)
 
-
-
 def multiFind(template):
     w, h = template[1].shape[::-1]
     capture = ImageGrab.grab()
@@ -70,98 +71,100 @@ def multiFind(template):
     # plt.show()
 
 def matchNeighbors(row,col):
-    current = board[row][col]
-    top = board[row-1][col] if row > 0 else None
-    topLeft = board[row-1][col-1] if row > 0 and col > 0 else None
-    left = board[row][col-1] if col > 0 else None
-    bottomLeft = board[row+1][col-1] if row < 7 and col > 0 else None
-    bottom = board[row+1][col] if row < 7 else None
-    bottomRight = board[row+1][col+1] if row < 7 and col < 7 else None
-    right = board[row][col+1] if col < 7 else None
-    topRight = board[row-1][col+1] if row > 0 and col < 7 else None
+    center = board[row][col]
+    top = board[row-1][col] if row > 0 else 0
+    topLeft = board[row-1][col-1] if row > 0 and col > 0 else 0
+    left = board[row][col-1] if col > 0 else 0
+    bottomLeft = board[row+1][col-1] if row < 7 and col > 0 else 0
+    bottom = board[row+1][col] if row < 7 else 0
+    bottomRight = board[row+1][col+1] if row < 7 and col < 7 else 0
+    right = board[row][col+1] if col < 7 else 0
+    topRight = board[row-1][col+1] if row > 0 and col < 7 else 0
 
     farRight = board[row][col+2] if col < 6 else None
     farLeft = board[row][col-2] if col > 1 else None
     farTop = board[row-2][col] if row > 1 else None
     farBottom = board[row+2][col] if row < 6 else None
 
-    if(top == left == bottom):
+    if(top == left == bottom != 0):
         gridToClick(row,col)
         gridToClick(row,col-1)
 
-    if(top == right == bottom):
+    if(top == right == bottom !=  0):
         gridToClick(row,col)
         gridToClick(row,col+1)
 
-    if(right == left == top):
+    if(right == left == top !=  0):
         gridToClick(row,col)
         gridToClick(row-1,col)
 
-    if(right == left == bottom):
+    if(right == left == bottom !=  0):
         gridToClick(row,col)
         gridToClick(row+1,col)
 
-    if(current == top == bottomRight):
+    if(center == top == bottomRight !=  0):
         gridToClick(row+1,col)
         gridToClick(row+1,col+1)
 
-    if(current == top == bottomLeft):
+    if(center == top == bottomLeft !=  0):
         gridToClick(row+1,col)
         gridToClick(row+1,col-1)
 
-    if(current == bottom == topRight):
+    if(center == bottom == topRight !=  0):
         gridToClick(row-1,col)
         gridToClick(row-1,col+1)
 
-    if(current == bottom == topLeft):
+    if(center == bottom == topLeft !=  0):
         gridToClick(row-1,col)
         gridToClick(row-1,col-1)
 
-    if(current == left == topRight):
+    if(center == left == topRight !=  0):
         gridToClick(row,col+1)
         gridToClick(row-1,col+1)
 
-    if(current == left == bottomRight):
+    if(center == left == bottomRight !=  0):
         gridToClick(row,col+1)
         gridToClick(row+1,col+1)
 
-    if(current == right == topLeft):
+    if(center == right == topLeft !=  0):
         gridToClick(row,col-1)
         gridToClick(row-1,col-1)
 
-    if(current == right == bottomLeft):
+    if(center == right == bottomLeft !=  0):
         gridToClick(row,col-1)
         gridToClick(row+1,col-1)
 
-    if(current == left == farRight):
+    if(center == left == farRight !=  0):
         gridToClick(row,col+1)
         gridToClick(row,col+2)
 
-    if(current == right == farLeft):
+    if(center == right == farLeft !=  0):
         gridToClick(row,col-1)
         gridToClick(row,col-2)
 
-    if(current == bottom == farTop):
+    if(center == bottom == farTop !=  0):
         gridToClick(row-1,col)
         gridToClick(row-2,col)
 
-    if(current == top == farBottom):
+    if(center == top == farBottom !=  0):
         gridToClick(row+1,col)
         gridToClick(row+2,col)
 
 # MAIN LOOP
 while True:
     # BUILD THE BOARD
+    board = copy.deepcopy(blankBoard)
     for g in gems:
-        print(g[0])
         multiFind(g)
-    # PRINT THE BOARD
-    for rows in board:
-        print(rows)
+
     # ACT!
     for row in range(0,8):
         for col in range(0,8):
             matchNeighbors(row,col)
 
+    # PRINT THE BOARD
+    for rows in board:
+        print(rows)
+
     # WAIT!
-    time.sleep(.5)
+    time.sleep(0.25)
